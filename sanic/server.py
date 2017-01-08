@@ -290,11 +290,11 @@ def serve(host, port, request_handler, error_handler, before_start=None,
         log.exception("Unable to start server")
         return
 
-    trigger_events(after_start, loop)
-
     # Register signals for graceful termination
     for _signal in (SIGINT, SIGTERM):
         loop.add_signal_handler(_signal, loop.stop)
+
+    trigger_events(after_start, loop)
 
     try:
         loop.run_forever()

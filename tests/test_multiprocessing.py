@@ -5,6 +5,7 @@ from ujson import loads as json_loads
 import pytest
 
 from sanic import Sanic
+from sanic.exceptions import Handler
 from sanic.response import json
 from sanic.utils import local_request, HOST, PORT
 
@@ -13,10 +14,6 @@ from sanic.utils import local_request, HOST, PORT
 #  GET
 # ------------------------------------------------------------ #
 
-# TODO: Figure out why this freezes on pytest but not when
-# executed via interpreter
-@pytest.mark.skip(
-    reason="Freezes with pytest not on interpreter")
 def test_multiprocessing():
     app = Sanic('test_json')
 
@@ -31,22 +28,14 @@ def test_multiprocessing():
         response.value = http_response.text.encode()
         stop_event.set()
 
-    def rescue_crew():
-        sleep(5)
-        stop_event.set()
-
-    rescue_process = Process(target=rescue_crew)
-    rescue_process.start()
-
     app.serve_multiple({
         'host': HOST,
         'port': PORT,
         'after_start': after_start,
         'request_handler': app.handle_request,
+        'error_handler': Handler(app),
         'request_max_size': 100000,
     }, workers=2, stop_event=stop_event)
-
-    rescue_process.terminate()
 
     try:
         results = json_loads(response.value)

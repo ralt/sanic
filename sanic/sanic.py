@@ -372,8 +372,9 @@ class Sanic:
             process.start()
             self.processes.append(process)
 
+        stop_event.wait()
+
+        self.stop()
+
         for process in self.processes:
             process.join()
-
-        # the above processes will block this until they're stopped
-        self.stop()
